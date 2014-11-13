@@ -25,7 +25,7 @@
 
 import BaseHTTPServer, socket, urlparse, urllib2, requests
 import signal, os, sys, errno, tempfile, netifaces, pprint, argparse, ConfigParser, xdg.BaseDirectory, StringIO, logging, daemon, distutils.version
-import gmusicapi, gmusicapi.utils, eyed3.id3
+import gmusicapi, gmusicapi.utils, eyeD3
 
 class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -157,50 +157,53 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return config['disable_all_access']
 
     def _get_song(self, id):
-        if config['disable_all_access']:
-            info = None
-            # a not so nice trick: we can't use the All Access 'get_track_info' method so we have to download the complete list of all the tracks in collection to get the information about this specific track
-            allSongs = self._robust_retry(lambda:api.get_all_songs())
-            for song in allSongs:
-                if 'nid' in song and song['nid'] == id:
-                    info = song.copy()
-                    break
-            allSongs = None
-        else:
-            info = self._robust_retry(lambda:api.get_track_info(store_track_id=id))
-        if info is None:
-            logger.info('Streaming song with id \'%s\'', id)
-        else:
-            logger.info('Streaming song with id \'%s\': %s - %s', id, info['artist'], info['title'])
-            logger.debug(pprint.pformat(info))
-            tags = eyed3.id3.Tag()
-            if 'artist' in info: tags.artist = info['artist']
-            if 'albumArtist' in info and 'album_artist' in dir(tags): ## extra check for support of 'album_artist' by eyed3: https://bitbucket.org/nicfit/eyed3/commits/9071bba4977f
-                tags.album_artist = info['albumArtist']  
-            if 'album' in info: tags.album = info['album']
-            if 'title' in info: tags.title = info['title']
-            if 'trackNumber' in info: tags.track_num = info['trackNumber']
-            if 'discNumber' in info: tags.disc_num = info['discNumber']
-            if 'genre' in info: tags.genre = eyed3.id3.Genre(info['genre'])
-            if 'albumArtRef' in info:
-                albumArt = opener.open(info['albumArtRef'][0]['url']).read()
-                tags.images.set(3, albumArt, "image/jpeg")
-            # weird hack: write the id3 tag on a temporary file and reload it (no way to render it on memory...)
-            tempFile = tempfile.NamedTemporaryFile(delete=False)
-            tags.save(tempFile.name)
-            tagsBin = tempFile.read()
-            tempFile.close()
-            os.unlink(tempFile.name)
-            self.wfile.write(tagsBin)
+#        if config['disable_all_access']:
+#            info = None
+#            # a not so nice trick: we can't use the All Access 'get_track_info' method so we have to download the complete list of all the tracks in collection to get the information about this specific track
+#            allSongs = self._robust_retry(lambda:api.get_all_songs())
+#            for song in allSongs:
+#                if 'nid' in song and song['nid'] == id:
+#                    info = song.copy()
+#                    break
+#            allSongs = None
+#        else:
+#            info = self._robust_retry(lambda:api.get_track_info(store_track_id=id))
+#        if info is None:
+#            logger.info('Streaming song with id \'%s\'', id)
+#        else:
+#            logger.info('Streaming song with id \'%s\': %s - %s', id, info['artist'], info['title'])
+#            logger.debug(pprint.pformat(info))
+#            tags = eyeD3.Tag()
+#            if 'artist' in info: tags.artist = info['artist']
+#            if 'albumArtist' in info and 'album_artist' in dir(tags): ## extra check for support of 'album_artist' by eyeD3: https://bitbucket.org/nicfit/eyeD3/commits/9071bba4977f
+#                tags.album_artist = info['albumArtist']  
+#            if 'album' in info: tags.album = info['album']
+#            if 'title' in info: tags.title = info['title']
+#            if 'trackNumber' in info: tags.track_num = info['trackNumber']
+#            if 'discNumber' in info: tags.disc_num = info['discNumber']
+#            if 'genre' in info: tags.genre = eyeD3.Genre(info['genre'])
+#            if 'albumArtRef' in info:
+#                albumArt = opener.open(info['albumArtRef'][0]['url']).read()
+#                tags.images.set(3, albumArt, "image/jpeg")
+#            # weird hack: write the id3 tag on a temporary file and reload it (no way to render it on memory...)
+#            tempFile = tempfile.NamedTemporaryFile(delete=False)
+#            tags.save(tempFile.name)
+#            tagsBin = tempFile.read()
+#            tempFile.close()
+#            os.unlink(tempFile.name)
+#            self.wfile.write(tagsBin)
 
+        logger.info(config['device_id']);
+        logger.info(id);
+#        url = api.get_stream_url(id, config['device_id'])
         url = self._robust_retry(lambda:api.get_stream_url(song_id=id, device_id=config['device_id']))
-        logger.debug('streaming url: %s', url)
-
-        mp3 = opener.open(url)
-        block = mp3.read(downloadBlockSize)
-        while len(block) > 0:
-            self.wfile.write(block)
-            block = mp3.read(downloadBlockSize)
+#        logger.debug('streaming url: %s', url)
+        self.wfile.write(url);
+#        mp3 = opener.open(url)
+#        block = mp3.read(downloadBlockSize)
+#        while len(block) > 0:
+#            self.wfile.write(block)
+#            block = mp3.read(downloadBlockSize)
 
     def _get_all_stations(self, format, separator, onlyUrl):
         logger.info('Getting all stations as plain-text list...' if format == 'text' else 'Getting all stations as M3U list...')
@@ -326,7 +329,7 @@ class GetHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         logger.debug('generated playlist:\n#EXTM3U')
         for track in songs:
             if 'nid' in track:
-                line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['nid'])
+                line = '#EXTINF:%s,%s%s%s\nhttp://%s:%s/get_song?id=%s' % ((int(track['durationMillis'])/1000) if 'durationMillis' in track else -1, '%s - ' % track['artist'] if 'artist' in track else '', track['title'] if 'title' in track else '', ' - %s' % track['album'] if config['extended_m3u'] and 'album' in track else '', config['host'], config['port'], track['id'])
                 self.wfile.write(('%s\n' % line).encode('utf-8'))
                 logger.debug(line)      
 

@@ -36,7 +36,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 - 0.9.5 (2014-03-23):
   - added support for the dynamic 'I'm feeling lucky' station: `get_ifl_station`
 - 0.9.4 (2014-02-02):
-  - added support for 'album artist' tag (requires a development version >= 0.7.5-beta of eyed3 lib)
+  - added support for 'album artist' tag (requires a development version >= 0.7.5-beta of eyeD3 lib)
   - added control on startup for new versions
 - 0.9.2 (2013-10-30):
   - added the possibility to rate songs (like/dislike)
@@ -58,7 +58,7 @@ This project is not supported nor endorsed by Google. Its aim is not the abuse o
 ### Requirements
 - a Google Play Music account with All Access subscription (some functionalities continue to work even with a free account)
 - a **Python** 2.7 interpreter
-- some python libs: *gmusicapi*, *netifaces*, *pyxdg*, *eyed3*, *python-daemon*
+- some python libs: *gmusicapi*, *netifaces*, *pyxdg*, *eyeD3*, *python-daemon*
 
 ### Installation
 The following instructions have a Debian/Ubuntu GNU/Linux system as reference: nevertheless they work on any other GNU/Linux system using the right substitute of `apt-get`. It should work on a Mac OS X system and it *could* even work on a Windows one.
@@ -78,7 +78,7 @@ The following instructions have a Debian/Ubuntu GNU/Linux system as reference: n
     - install it and all the dependencies using `sudo pip install .` from the inside of the folder
     - use it from everywhere: `GMusicProxy`
 
-  The `pip install ...` command could require the options `--allow-external eyed3 --allow-unverified eyed3` on some systems in order to validate the installation of `eyed3`.
+  The `pip install ...` command could require the options `--allow-external eyeD3 --allow-unverified eyeD3` on some systems in order to validate the installation of `eyeD3`.
 
   Importante note: the usage of `sudo pip ...` commands could mess up your main packaging system; consider the next method.
 
